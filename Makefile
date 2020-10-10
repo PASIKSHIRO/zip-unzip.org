@@ -6,3 +6,6 @@ build-nginx:
 	echo ${PAT} | docker login ghcr.io -u ${USER} --password-stdin;
 	docker build -t ${IMAGE_NAME} nginx
 	docker push ${IMAGE_NAME}
+
+start-prod:
+	docker-compose -f docker-compose.yml -f docker-compose.prod.override.yml up
