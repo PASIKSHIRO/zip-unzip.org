@@ -1,5 +1,5 @@
 include .env
-PROJECT_NAME:="zip-unzip"
+PROJECT_NAME:=zip-unzip
 
 build-nginx:
 	$(eval IMAGE_NAME="ghcr.io/kharandziuk/${PROJECT_NAME}.nginx:latest")
