@@ -1,0 +1,65 @@
+- name: server
+  hosts: all
+  become: True
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    project_name: "zip-unzip"
+    advertise_addr: "10.2.2.25"
+    registry_url: "ghcr.io"
+  pre_tasks:
+    - name: Wait for system to become reachable
+      wait_for_connection:
+
+    - name: Gather facts for first time
+      setup:
+    - apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+  roles:
+    - role: geerlingguy.pip
+      pip_package: python3-pip
+      pip_executable: pip3
+      pip_install_packages:
+        - name: docker
+        - name: docker-compose
+        - name: jsondiff
+    - role: geerlingguy.docker
+      docker_install_compose: true
+  tasks:
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        state: present
+        advertise_addr: "{{ advertise_addr }}" # FIXME: should be replaced
+
+    - name: Log into DockerHub
+      community.general.docker_login:
+        username: "{{ registry_user }}"
+        password: "{{ registry_token }}"
+        url: "{{ registry_url }}"
+
+    - name: add environment file
+      template:
+        src: dotenv.j2
+        dest: /opt/.env
+
+
+    - name: Copy file with owner and permissions
+      copy:
+        src: "compose-files/{{ item }}"
+        dest: "/opt/{{ item }}"
+      loop:
+        - docker-compose.yml
+        - docker-compose.prod.override.yml
+
+
+    - name: Deploy stack from a compose file
+      docker_stack:
+        state: present
+        prune: yes
+        name: "{{ project_name}}-stack"
+        with_registry_auth: yes
+        compose:
+          - /opt/docker-compose.yml
+          - /opt/docker-compose.prod.override.yml
