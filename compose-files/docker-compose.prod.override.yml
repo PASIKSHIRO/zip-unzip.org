@@ -4,4 +4,4 @@ services:
   nginx:
     image: ghcr.io/kharandziuk/zip-unzip.nginx:latest
     ports:
-      - 80:80
+      - 81:80
